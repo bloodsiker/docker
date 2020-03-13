@@ -1,0 +1,13 @@
+server {
+    server_name static.dv;
+    root /var/www/static;
+    
+    sendfile off;
+
+    location ~* \.(css|js)$ {
+        add_header Cache-Control max-age=0;
+    }
+
+    error_log /var/log/nginx/static_error.log;
+    access_log /var/log/nginx/static_access.log;
+}
