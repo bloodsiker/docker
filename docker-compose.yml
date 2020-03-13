@@ -1,23 +1,46 @@
 version: '2'
 
 services:
+    # search engine
+    # elasticsearch:
+    #     image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.5.4
+    #     container_name: elasticsearch
+    #     entrypoint:
+    #         - elasticsearch
+    #         - -Ehttp.port=9200
+    #         - -Ehttp.cors.enabled=true
+    #         - -Ehttp.cors.allow-origin=http://localhost:1358
+    #         - -Ehttp.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
+    #         - -Ehttp.cors.allow-credentials=true
+    #     user: elasticsearch
+    #     ports:
+    #         - "9200:9200"
+
+    # elasticsearch browser
+    # dejavu:
+    #     image: appbaseio/dejavu:3.0.0-alpha
+    #     container_name: dejavu
+    #     ports:
+    #         - "1358:1358"
+    #     links:
+    #         - elasticsearch
+
     db:
-        image: mysql
+        image: mysql:5.7.17
         volumes:
             - "./.data/db:/var/lib/mysql"
             - /var/www:/var/www
+#            - /var/www/my.cnf:/etc/mysql/my.cnf
         ports:
             - "3306:3306"           
         dns:
             - 172.22.33.10
             - 172.22.255.102
-        command: --default-authentication-plugin=mysql_native_password
-        # command: mysqld --sql-mode=NO_ENGINE_SUBSTITUTION    
-        restart: always    
         environment:
             MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
             MYSQL_USER: ${MYSQL_USER}
             MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+        command: mysqld --sql-mode=NO_ENGINE_SUBSTITUTION    
 
     phpmyadmin:
         image: phpmyadmin/phpmyadmin
@@ -42,15 +65,16 @@ services:
             - 172.22.255.102
         volumes:
             - /var/www:/var/www
-            # - ./logs/nlotv:/var/www/nlotv/var/logs
-            # - ./logs/indigo:/var/www/indigo/var/logs
-            # - ./logs/videomanager:/var/www/videomanager/var/logs
-            # - ./logs/ukraine:/var/www/ukraine/var/logs
-            # - ./logs/segodnya2018:/var/www/segodnya2018/var/logs
+            - ./logs/nlotv:/var/www/nlotv/app/logs
+            - ./logs/indigo:/var/www/indigo/app/logs
+            - ./logs/videomanager:/var/www/videomanager/var/logs
+            - ./logs/ukraine:/var/www/ukraine/app/logs
+            - ./logs/segodnya2018:/var/www/segodnya2018/var/logs
         links:
           - db
           - mongo
           - redis
+          # - elasticsearch
 
     redis:
         image: redis:alpine
@@ -78,4 +102,15 @@ services:
             - ./nginx/conf.d/:/etc/nginx/conf.d
             - ./nginx/sites/:/etc/nginx/sites-enabled
             - ./nginx/sites/:/etc/nginx/sites-available
-        restart: always
+        restart: always    
+
+    # elk:
+    #     image: willdurand/elk
+    #     ports:
+    #         - "81:80"
+    #     volumes:
+    #         - ./elk/logstash:/etc/logstash
+    #         - ./elk/logstash/patterns:/opt/logstash/patterns
+    #     volumes_from:
+    #         - php
+    #         - nginx
